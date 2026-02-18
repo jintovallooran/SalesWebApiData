@@ -1,0 +1,810 @@
+USE [SalesManagement]
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_ORD$save_order_details]    Script Date: 18-02-2026 06:04:26 AM ******/
+DROP PROCEDURE [dbo].[PKG_ORD$save_order_details]
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_ORD$get_order_no]    Script Date: 18-02-2026 06:04:26 AM ******/
+DROP PROCEDURE [dbo].[PKG_ORD$get_order_no]
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_ORD$get_order_list]    Script Date: 18-02-2026 06:04:26 AM ******/
+DROP PROCEDURE [dbo].[PKG_ORD$get_order_list]
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_AD$validate_login]    Script Date: 18-02-2026 06:04:26 AM ******/
+DROP PROCEDURE [dbo].[PKG_AD$validate_login]
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_AD$get_vendor_list]    Script Date: 18-02-2026 06:04:26 AM ******/
+DROP PROCEDURE [dbo].[PKG_AD$get_vendor_list]
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_AD$get_user_role]    Script Date: 18-02-2026 06:04:26 AM ******/
+DROP PROCEDURE [dbo].[PKG_AD$get_user_role]
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_AD$get_user_list]    Script Date: 18-02-2026 06:04:26 AM ******/
+DROP PROCEDURE [dbo].[PKG_AD$get_user_list]
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_AD$get_order_item_list]    Script Date: 18-02-2026 06:04:26 AM ******/
+DROP PROCEDURE [dbo].[PKG_AD$get_order_item_list]
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_AD$get_item_list]    Script Date: 18-02-2026 06:04:26 AM ******/
+DROP PROCEDURE [dbo].[PKG_AD$get_item_list]
+GO
+/****** Object:  StoredProcedure [dbo].[DB_ERROR_LOGGER]    Script Date: 18-02-2026 06:04:26 AM ******/
+DROP PROCEDURE [dbo].[DB_ERROR_LOGGER]
+GO
+/****** Object:  Table [dbo].[T_VENDOR_MASTER]    Script Date: 18-02-2026 06:04:26 AM ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[T_VENDOR_MASTER]') AND type in (N'U'))
+DROP TABLE [dbo].[T_VENDOR_MASTER]
+GO
+/****** Object:  Table [dbo].[T_USER_ROLE]    Script Date: 18-02-2026 06:04:26 AM ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[T_USER_ROLE]') AND type in (N'U'))
+DROP TABLE [dbo].[T_USER_ROLE]
+GO
+/****** Object:  Table [dbo].[T_USER_MASTER]    Script Date: 18-02-2026 06:04:26 AM ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[T_USER_MASTER]') AND type in (N'U'))
+DROP TABLE [dbo].[T_USER_MASTER]
+GO
+/****** Object:  Table [dbo].[T_SYSTEM_PARM]    Script Date: 18-02-2026 06:04:26 AM ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[T_SYSTEM_PARM]') AND type in (N'U'))
+DROP TABLE [dbo].[T_SYSTEM_PARM]
+GO
+/****** Object:  Table [dbo].[T_ORDER_MASTER]    Script Date: 18-02-2026 06:04:26 AM ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[T_ORDER_MASTER]') AND type in (N'U'))
+DROP TABLE [dbo].[T_ORDER_MASTER]
+GO
+/****** Object:  Table [dbo].[T_ORDER_DETAILS]    Script Date: 18-02-2026 06:04:26 AM ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[T_ORDER_DETAILS]') AND type in (N'U'))
+DROP TABLE [dbo].[T_ORDER_DETAILS]
+GO
+/****** Object:  Table [dbo].[T_ITEM_MASTER]    Script Date: 18-02-2026 06:04:26 AM ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[T_ITEM_MASTER]') AND type in (N'U'))
+DROP TABLE [dbo].[T_ITEM_MASTER]
+GO
+/****** Object:  Table [dbo].[T_ERROR_LOG]    Script Date: 18-02-2026 06:04:26 AM ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[T_ERROR_LOG]') AND type in (N'U'))
+DROP TABLE [dbo].[T_ERROR_LOG]
+GO
+/****** Object:  Table [dbo].[T_CODE]    Script Date: 18-02-2026 06:04:26 AM ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[T_CODE]') AND type in (N'U'))
+DROP TABLE [dbo].[T_CODE]
+GO
+/****** Object:  UserDefinedTableType [dbo].[TT_ORDER_ITEMS]    Script Date: 18-02-2026 06:04:26 AM ******/
+DROP TYPE [dbo].[TT_ORDER_ITEMS]
+GO
+/****** Object:  UserDefinedTableType [dbo].[TT_ORDER_ITEMS]    Script Date: 18-02-2026 06:04:26 AM ******/
+CREATE TYPE [dbo].[TT_ORDER_ITEMS] AS TABLE(
+	[ITEM_ID] [bigint] NOT NULL,
+	[QUANTITY] [float] NOT NULL
+)
+GO
+/****** Object:  Table [dbo].[T_CODE]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[T_CODE](
+	[CODE] [varchar](20) NOT NULL,
+	[DESCRIPTION] [varchar](200) NOT NULL,
+	[GROUP_NAME] [nvarchar](50) NOT NULL,
+	[STATUS] [varchar](1) NULL,
+	[DISPLAY_SEQ] [int] NULL
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[T_ERROR_LOG]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[T_ERROR_LOG](
+	[ERROR_ID] [int] NOT NULL,
+	[ERROR_MSG] [text] NOT NULL,
+	[STACK_TRACE] [text] NULL,
+	[FUNCTION_NAME] [varchar](200) NULL,
+	[ERROR_SOURCE] [varchar](20) NOT NULL,
+	[USER_ID] [bigint] NULL,
+	[ERROR_DATE] [datetime] NOT NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[T_ITEM_MASTER]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[T_ITEM_MASTER](
+	[ITEM_ID] [bigint] NOT NULL,
+	[ITEM_CODE] [varchar](20) NOT NULL,
+	[ITEM_NAME] [varchar](50) NOT NULL,
+	[UOM] [varchar](10) NOT NULL,
+	[TOTAL_QTY] [bigint] NULL,
+	[INSERT_BY] [bigint] NOT NULL,
+	[INSERT_DATE] [date] NOT NULL,
+	[UPDATE_BY] [bigint] NULL,
+	[UPDATE_DATE] [date] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[ITEM_ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[T_ORDER_DETAILS]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[T_ORDER_DETAILS](
+	[ORDER_DETAIL_ID] [bigint] IDENTITY(1,1) NOT NULL,
+	[ORDER_ID] [bigint] NOT NULL,
+	[ITEM_ID] [bigint] NOT NULL,
+	[QUANTITY] [float] NULL,
+	[INSERT_BY] [bigint] NOT NULL,
+	[INSERT_DATE] [date] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[ORDER_DETAIL_ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[T_ORDER_MASTER]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[T_ORDER_MASTER](
+	[ORDER_ID] [bigint] NOT NULL,
+	[ORDER_NO] [varchar](30) NOT NULL,
+	[VENDOR_ID] [bigint] NOT NULL,
+	[INSERT_BY] [bigint] NOT NULL,
+	[INSERT_DATE] [date] NOT NULL,
+	[UPDATE_BY] [bigint] NULL,
+	[UPDATE_DATE] [date] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[ORDER_ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[T_SYSTEM_PARM]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[T_SYSTEM_PARM](
+	[PARM_TYPE] [varchar](30) NOT NULL,
+	[PARM_VALUE] [nvarchar](1000) NOT NULL,
+	[PARM_DESC] [varchar](100) NOT NULL,
+	[UPDATE_BY] [varchar](100) NULL,
+	[UPDATE_DATE] [date] NULL
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[T_USER_MASTER]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[T_USER_MASTER](
+	[USER_ID] [bigint] NOT NULL,
+	[NAME] [varchar](50) NOT NULL,
+	[USERNAME] [nvarchar](50) NOT NULL,
+	[PASSWORD] [nvarchar](500) NULL,
+	[EMAIL] [nvarchar](100) NULL,
+	[MOBILE] [nvarchar](20) NULL,
+	[GENDER] [varchar](2) NULL,
+	[STATUS] [varchar](1) NULL,
+	[INSERT_BY] [bigint] NOT NULL,
+	[INSERT_DATE] [date] NOT NULL,
+	[UPDATE_BY] [bigint] NULL,
+	[UPDATE_DATE] [date] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[USER_ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[T_USER_ROLE]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[T_USER_ROLE](
+	[USER_ROLE_ID] [bigint] NOT NULL,
+	[USER_ID] [bigint] NOT NULL,
+	[ROLE_ID] [int] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[USER_ROLE_ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[T_VENDOR_MASTER]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[T_VENDOR_MASTER](
+	[VENDOR_ID] [bigint] IDENTITY(1,1) NOT NULL,
+	[VENDOR_CODE] [varchar](20) NOT NULL,
+	[VENDOR_NAME] [varchar](100) NOT NULL,
+	[INSERT_BY] [bigint] NOT NULL,
+	[INSERT_DATE] [date] NOT NULL,
+	[UPDATE_BY] [bigint] NULL,
+	[UPDATE_DATE] [date] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[VENDOR_ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+INSERT [dbo].[T_CODE] ([CODE], [DESCRIPTION], [GROUP_NAME], [STATUS], [DISPLAY_SEQ]) VALUES (N'1', N'Administrator ', N'ROLE', N'A', 1)
+GO
+INSERT [dbo].[T_CODE] ([CODE], [DESCRIPTION], [GROUP_NAME], [STATUS], [DISPLAY_SEQ]) VALUES (N'2', N'Sales', N'ROLE', N'A', 2)
+GO
+INSERT [dbo].[T_CODE] ([CODE], [DESCRIPTION], [GROUP_NAME], [STATUS], [DISPLAY_SEQ]) VALUES (N'3', N'Normal User', N'ROLE', N'A', 3)
+GO
+INSERT [dbo].[T_ITEM_MASTER] ([ITEM_ID], [ITEM_CODE], [ITEM_NAME], [UOM], [TOTAL_QTY], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (1, N'ITM-001', N'Laptop', N'NOS', 100, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_ITEM_MASTER] ([ITEM_ID], [ITEM_CODE], [ITEM_NAME], [UOM], [TOTAL_QTY], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (2, N'ITM-002', N'Keyboard', N'NOS', 250, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_ITEM_MASTER] ([ITEM_ID], [ITEM_CODE], [ITEM_NAME], [UOM], [TOTAL_QTY], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (3, N'ITM-003', N'Mouse', N'NOS', 300, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_ITEM_MASTER] ([ITEM_ID], [ITEM_CODE], [ITEM_NAME], [UOM], [TOTAL_QTY], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (4, N'ITM-004', N'Monitor 24"', N'NOS', 120, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_ITEM_MASTER] ([ITEM_ID], [ITEM_CODE], [ITEM_NAME], [UOM], [TOTAL_QTY], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (5, N'ITM-005', N'Printer', N'NOS', 50, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_ITEM_MASTER] ([ITEM_ID], [ITEM_CODE], [ITEM_NAME], [UOM], [TOTAL_QTY], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (6, N'ITM-006', N'Scanner', N'NOS', 40, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_ITEM_MASTER] ([ITEM_ID], [ITEM_CODE], [ITEM_NAME], [UOM], [TOTAL_QTY], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (7, N'ITM-007', N'Router', N'NOS', 80, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_ITEM_MASTER] ([ITEM_ID], [ITEM_CODE], [ITEM_NAME], [UOM], [TOTAL_QTY], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (8, N'ITM-008', N'Hard Disk 1TB', N'NOS', 150, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_ITEM_MASTER] ([ITEM_ID], [ITEM_CODE], [ITEM_NAME], [UOM], [TOTAL_QTY], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (10, N'ITM-009', N'USB Cable', N'NOS', 500, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_ITEM_MASTER] ([ITEM_ID], [ITEM_CODE], [ITEM_NAME], [UOM], [TOTAL_QTY], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (11, N'ITM-010', N'Web Camera', N'NOS', 90, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+SET IDENTITY_INSERT [dbo].[T_ORDER_DETAILS] ON 
+GO
+INSERT [dbo].[T_ORDER_DETAILS] ([ORDER_DETAIL_ID], [ORDER_ID], [ITEM_ID], [QUANTITY], [INSERT_BY], [INSERT_DATE]) VALUES (4, 4, 4, 5, 1, CAST(N'2026-02-18' AS Date))
+GO
+INSERT [dbo].[T_ORDER_DETAILS] ([ORDER_DETAIL_ID], [ORDER_ID], [ITEM_ID], [QUANTITY], [INSERT_BY], [INSERT_DATE]) VALUES (5, 5, 4, 5, 1, CAST(N'2026-02-18' AS Date))
+GO
+INSERT [dbo].[T_ORDER_DETAILS] ([ORDER_DETAIL_ID], [ORDER_ID], [ITEM_ID], [QUANTITY], [INSERT_BY], [INSERT_DATE]) VALUES (6, 6, 4, 5, 1, CAST(N'2026-02-18' AS Date))
+GO
+INSERT [dbo].[T_ORDER_DETAILS] ([ORDER_DETAIL_ID], [ORDER_ID], [ITEM_ID], [QUANTITY], [INSERT_BY], [INSERT_DATE]) VALUES (7, 7, 4, 5, 1, CAST(N'2026-02-18' AS Date))
+GO
+INSERT [dbo].[T_ORDER_DETAILS] ([ORDER_DETAIL_ID], [ORDER_ID], [ITEM_ID], [QUANTITY], [INSERT_BY], [INSERT_DATE]) VALUES (9, 9, 4, 5, 1, CAST(N'2026-02-18' AS Date))
+GO
+INSERT [dbo].[T_ORDER_DETAILS] ([ORDER_DETAIL_ID], [ORDER_ID], [ITEM_ID], [QUANTITY], [INSERT_BY], [INSERT_DATE]) VALUES (10, 10, 4, 5, 1, CAST(N'2026-02-18' AS Date))
+GO
+INSERT [dbo].[T_ORDER_DETAILS] ([ORDER_DETAIL_ID], [ORDER_ID], [ITEM_ID], [QUANTITY], [INSERT_BY], [INSERT_DATE]) VALUES (13, 1, 2, 12, 1, CAST(N'2026-02-18' AS Date))
+GO
+INSERT [dbo].[T_ORDER_DETAILS] ([ORDER_DETAIL_ID], [ORDER_ID], [ITEM_ID], [QUANTITY], [INSERT_BY], [INSERT_DATE]) VALUES (14, 2, 2, 12, 1, CAST(N'2026-02-18' AS Date))
+GO
+INSERT [dbo].[T_ORDER_DETAILS] ([ORDER_DETAIL_ID], [ORDER_ID], [ITEM_ID], [QUANTITY], [INSERT_BY], [INSERT_DATE]) VALUES (15, 8, 4, 5, 1, CAST(N'2026-02-18' AS Date))
+GO
+INSERT [dbo].[T_ORDER_DETAILS] ([ORDER_DETAIL_ID], [ORDER_ID], [ITEM_ID], [QUANTITY], [INSERT_BY], [INSERT_DATE]) VALUES (16, 3, 2, 12, 1, CAST(N'2026-02-18' AS Date))
+GO
+SET IDENTITY_INSERT [dbo].[T_ORDER_DETAILS] OFF
+GO
+INSERT [dbo].[T_ORDER_MASTER] ([ORDER_ID], [ORDER_NO], [VENDOR_ID], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (1, N'ORD-1001', 1, 1, CAST(N'2026-02-18' AS Date), 1, CAST(N'2026-02-18' AS Date))
+GO
+INSERT [dbo].[T_ORDER_MASTER] ([ORDER_ID], [ORDER_NO], [VENDOR_ID], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (2, N'ORD-1002', 1, 1, CAST(N'2026-02-18' AS Date), 1, CAST(N'2026-02-18' AS Date))
+GO
+INSERT [dbo].[T_ORDER_MASTER] ([ORDER_ID], [ORDER_NO], [VENDOR_ID], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (3, N'ORD-1003', 1, 1, CAST(N'2026-02-18' AS Date), 1, CAST(N'2026-02-18' AS Date))
+GO
+INSERT [dbo].[T_ORDER_MASTER] ([ORDER_ID], [ORDER_NO], [VENDOR_ID], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (4, N'ORD-1004', 1, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_ORDER_MASTER] ([ORDER_ID], [ORDER_NO], [VENDOR_ID], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (5, N'ORD-1005', 1, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_ORDER_MASTER] ([ORDER_ID], [ORDER_NO], [VENDOR_ID], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (6, N'ORD-1006', 1, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_ORDER_MASTER] ([ORDER_ID], [ORDER_NO], [VENDOR_ID], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (7, N'ORD-1007', 1, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_ORDER_MASTER] ([ORDER_ID], [ORDER_NO], [VENDOR_ID], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (8, N'ORD-1008', 1, 1, CAST(N'2026-02-18' AS Date), 1, CAST(N'2026-02-18' AS Date))
+GO
+INSERT [dbo].[T_ORDER_MASTER] ([ORDER_ID], [ORDER_NO], [VENDOR_ID], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (9, N'ORD-1009', 1, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_ORDER_MASTER] ([ORDER_ID], [ORDER_NO], [VENDOR_ID], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (10, N'ORD-1010', 1, 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_SYSTEM_PARM] ([PARM_TYPE], [PARM_VALUE], [PARM_DESC], [UPDATE_BY], [UPDATE_DATE]) VALUES (N'ORDER_NO', N'1010', N'Order Number Sequence', N'1', CAST(N'2026-02-18' AS Date))
+GO
+INSERT [dbo].[T_USER_MASTER] ([USER_ID], [NAME], [USERNAME], [PASSWORD], [EMAIL], [MOBILE], [GENDER], [STATUS], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (1, N'admin', N'admin', N'12345678', N'admin@gmail.com', N'9656465724', N'M', N'Y', 1, CAST(N'2026-02-17' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_USER_ROLE] ([USER_ROLE_ID], [USER_ID], [ROLE_ID]) VALUES (1, 1, 2)
+GO
+INSERT [dbo].[T_USER_ROLE] ([USER_ROLE_ID], [USER_ID], [ROLE_ID]) VALUES (2, 1, 1)
+GO
+SET IDENTITY_INSERT [dbo].[T_VENDOR_MASTER] ON 
+GO
+INSERT [dbo].[T_VENDOR_MASTER] ([VENDOR_ID], [VENDOR_CODE], [VENDOR_NAME], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (1, N'VND-001', N'ABC Electronics', 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_VENDOR_MASTER] ([VENDOR_ID], [VENDOR_CODE], [VENDOR_NAME], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (2, N'VND-002', N'Global Tech Supplies', 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_VENDOR_MASTER] ([VENDOR_ID], [VENDOR_CODE], [VENDOR_NAME], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (3, N'VND-003', N'Prime Distributors', 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_VENDOR_MASTER] ([VENDOR_ID], [VENDOR_CODE], [VENDOR_NAME], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (4, N'VND-004', N'NextGen Systems', 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_VENDOR_MASTER] ([VENDOR_ID], [VENDOR_CODE], [VENDOR_NAME], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (5, N'VND-005', N'Smart Solutions', 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_VENDOR_MASTER] ([VENDOR_ID], [VENDOR_CODE], [VENDOR_NAME], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (6, N'VND-006', N'Innovate Traders', 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_VENDOR_MASTER] ([VENDOR_ID], [VENDOR_CODE], [VENDOR_NAME], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (7, N'VND-007', N'Future Gadgets', 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_VENDOR_MASTER] ([VENDOR_ID], [VENDOR_CODE], [VENDOR_NAME], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (8, N'VND-008', N'Digital World', 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_VENDOR_MASTER] ([VENDOR_ID], [VENDOR_CODE], [VENDOR_NAME], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (9, N'VND-009', N'Techno Mart', 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+INSERT [dbo].[T_VENDOR_MASTER] ([VENDOR_ID], [VENDOR_CODE], [VENDOR_NAME], [INSERT_BY], [INSERT_DATE], [UPDATE_BY], [UPDATE_DATE]) VALUES (10, N'VND-010', N'Elite Components', 1, CAST(N'2026-02-18' AS Date), NULL, NULL)
+GO
+SET IDENTITY_INSERT [dbo].[T_VENDOR_MASTER] OFF
+GO
+/****** Object:  StoredProcedure [dbo].[DB_ERROR_LOGGER]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+CREATE PROCEDURE [dbo].[DB_ERROR_LOGGER]
+
+AS
+BEGIN
+	SELECT  ERROR_NUMBER() AS ErrorNumber,
+			ERROR_SEVERITY() AS ErrorSeverity,
+			ERROR_STATE() AS ErrorState,
+			ERROR_PROCEDURE() AS ErrorProcedure,
+			ERROR_LINE() AS ErrorLine,
+			ERROR_MESSAGE() AS ErrorMessage;
+
+	declare @i_count bigint ;
+	select @i_count = ISNULL(max(ERROR_ID),0) + 1 
+	from T_ERROR_LOG
+ 
+	insert into T_ERROR_LOG
+			(ERROR_ID,
+			ERROR_MSG,
+			STACK_TRACE,
+			FUNCTION_NAME,
+			ERROR_SOURCE,
+			USER_ID,
+			ERROR_DATE)
+	values	(@i_count,
+			ERROR_MESSAGE(),
+			null,
+			ERROR_PROCEDURE(),
+			'DataBase',
+			null,
+			getdate());
+
+END
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_AD$get_item_list]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE   PROCEDURE  [dbo].[PKG_AD$get_item_list]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        ITEM_ID ItemId,
+        ITEM_CODE ItemCode,
+        ITEM_NAME ItemName,
+        UOM Uom,
+        TOTAL_QTY Quantity
+    FROM dbo.T_ITEM_MASTER
+    ORDER BY ITEM_NAME;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_AD$get_order_item_list]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+CREATE   PROCEDURE  [dbo].[PKG_AD$get_order_item_list]
+(
+    @ai_order_id BIGINT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        od.ITEM_ID ItemId,
+        im.ITEM_CODE ItemCode,
+        im.ITEM_NAME ItemName,
+        im.UOM Uom,
+        od.QUANTITY Quantity
+    FROM dbo.T_ORDER_DETAILS od
+    INNER JOIN dbo.T_ITEM_MASTER im
+        ON im.ITEM_ID = od.ITEM_ID
+    WHERE od.ORDER_ID = @ai_order_id
+    ORDER BY im.ITEM_NAME;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_AD$get_user_list]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE   PROCEDURE [dbo].[PKG_AD$get_user_list] --2
+(
+    @ai_role_id INT = NULL   -- NULL = all roles
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        U.USER_ID UserId,
+        U.NAME Name,
+        U.USERNAME UserName,
+        U.EMAIL Email,
+        U.MOBILE Mobile,
+
+        -- comma separated roles
+        STRING_AGG(C.DESCRIPTION, ', ') 
+            WITHIN GROUP (ORDER BY C.DISPLAY_SEQ) AS Role
+
+    FROM dbo.T_USER_MASTER U
+    INNER JOIN dbo.T_USER_ROLE UR
+        ON U.USER_ID = UR.USER_ID
+    INNER JOIN dbo.T_CODE C
+        ON C.CODE = CAST(UR.ROLE_ID AS VARCHAR(20))
+       AND C.GROUP_NAME = 'ROLE'
+       AND C.STATUS = 'A'
+
+    WHERE
+        (@ai_role_id IS NULL OR UR.ROLE_ID = @ai_role_id)
+
+    GROUP BY
+        U.USER_ID,
+        U.NAME,
+        U.USERNAME,
+        U.EMAIL,
+        U.MOBILE,
+        U.STATUS
+
+    ORDER BY U.NAME;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_AD$get_user_role]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE     PROCEDURE [dbo].[PKG_AD$get_user_role] --1
+					   @ai_user_id bigint
+AS 
+BEGIN
+	BEGIN TRY 	
+		 SELECT ROLE_ID RoleId
+		 FROM T_USER_ROLE 
+		 WHERE USER_ID = @ai_user_id
+		
+	END TRY
+	BEGIN CATCH
+		EXEC [DB_ERROR_LOGGER]
+	END CATCH
+END
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_AD$get_vendor_list]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE   PROCEDURE  [dbo].[PKG_AD$get_vendor_list]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        VENDOR_ID   AS VendorId,
+        VENDOR_CODE as VendorCode,
+        VENDOR_NAME AS VendorName
+    FROM dbo.T_VENDOR_MASTER
+    ORDER BY VENDOR_NAME;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_AD$validate_login]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE   PROCEDURE [dbo].[PKG_AD$validate_login] 
+					   @as_user_name varchar(50),
+					   @as_pwd varchar(100),
+					   @p_msg varchar(500) OUTPUT,
+					   @p_msg_type tinyint OUTPUT, 
+					   @p_ret_id bigint OUTPUT
+AS 
+BEGIN
+	BEGIN TRY 	
+
+			IF EXISTS ( SELECT [USER_ID] FROM [dbo].[T_USER_MASTER] WHERE ([USERNAME] = @as_user_name or EMAIL = @as_user_name) and STATUS ='Y' )
+			BEGIN			 
+					IF EXISTS ( SELECT 1 FROM [dbo].[T_USER_MASTER] 
+					WHERE ([USERNAME] = @as_user_name or EMAIL = @as_user_name) AND [PASSWORD] = @as_pwd  )
+					BEGIN
+						SELECT @p_ret_id = [USER_ID] 
+						FROM [dbo].[T_USER_MASTER] 
+						WHERE ([USERNAME] = @as_user_name or EMAIL = @as_user_name) AND [PASSWORD] =  @as_pwd  
+
+						SET @p_msg = 'SUCCESS'
+						SET @p_msg_type = 2		
+					  	RETURN
+					END
+					ELSE 
+					BEGIN
+						SET @p_msg = 'Invalid Password....'
+						set @p_msg_type = 0
+						set @p_ret_id = 0
+						return
+					END
+			END
+			ELSE 
+			BEGIN
+				SET @p_msg = 'Invalid/Inactive User Name..'
+				SET @p_msg_type = 0
+				SET @p_ret_id = 0
+				RETURN
+			END
+		
+	END TRY
+	BEGIN CATCH
+		EXEC [DB_ERROR_LOGGER]
+	END CATCH
+END
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_ORD$get_order_list]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE   PROCEDURE [dbo].[PKG_ORD$get_order_list]
+(
+    @ai_user_id    BIGINT,
+    @as_order_no  VARCHAR(30) = NULL,
+    @ad_from_date  DATE = NULL,
+    @ad_to_date    DATE = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        ORDER_ID OrderId,
+        ORDER_NO OrderNo,
+        om.VENDOR_ID VendorId,
+        vm.VENDOR_NAME VendorName,
+        vm.VENDOR_CODE VendorCode,
+        om.INSERT_DATE OrderDate
+    FROM dbo.T_ORDER_MASTER om
+    LEFT OUTER JOIN T_VENDOR_MASTER vm ON vm.VENDOR_ID =om.VENDOR_ID 
+    WHERE
+        vm.INSERT_BY = @ai_user_id
+        AND (@as_order_no IS NULL OR om.ORDER_NO LIKE '%' + @as_order_no + '%')
+        AND (@ad_from_date IS NULL OR om.INSERT_DATE >= @ad_from_date)
+        AND (@ad_to_date IS NULL OR om.INSERT_DATE <= @ad_to_date)
+    ORDER BY om.INSERT_DATE DESC;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_ORD$get_order_no]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE   PROCEDURE [dbo].[PKG_ORD$get_order_no] 
+AS
+BEGIN
+    DECLARE @NEXT_NO  INT;
+
+      
+            SELECT
+                @NEXT_NO = CAST(PARM_VALUE AS INT) + 1 
+            FROM dbo.T_SYSTEM_PARM WITH (UPDLOCK, HOLDLOCK)
+            WHERE PARM_TYPE = 'ORDER_NO';
+
+            SELECT CONCAT('ORD-', @NEXT_NO) as OrderNo;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[PKG_ORD$save_order_details]    Script Date: 18-02-2026 06:04:26 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE   PROCEDURE [dbo].[PKG_ORD$save_order_details] 
+(
+    @ai_order_id   bigint,
+    @ai_vendor_id  bigint,
+    @t_items       dbo.TT_ORDER_ITEMS readonly,
+    @as_ops_mode   varchar(10),             
+    @ai_user_id       bigint,
+    @p_msg         varchar(500) OUTPUT,
+	@p_msg_type    tinyint OUTPUT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @ORDER_NO VARCHAR(30);
+    DECLARE @NEXT_NO  INT;
+
+    BEGIN TRY
+        BEGIN TRAN;
+        IF @as_ops_mode IN ('INSERT','UPDATE')
+        BEGIN
+            -- At least one item required
+            IF NOT EXISTS (SELECT 1 FROM @t_items)
+            BEGIN
+                SET @p_msg = 'Order must contain at least one item.';
+                SET @p_msg_type = 0;
+                RETURN
+            END
+            -- Duplicate item check
+            IF EXISTS ( SELECT ITEM_ID FROM @t_items GROUP BY ITEM_ID HAVING COUNT(*) > 1 )
+            BEGIN
+                SET @p_msg = 'Duplicate items found in order item list.';                
+                SET @p_msg_type = 0;
+                RETURN
+            END
+        END
+
+        ------------------------------------------------
+        -- ADD ORDER
+        ------------------------------------------------
+        IF @as_ops_mode = 'INSERT'
+        BEGIN
+            -- Generate ORDER_NO safely
+            SELECT
+                @NEXT_NO = CAST(PARM_VALUE AS INT) + 1
+            FROM dbo.T_SYSTEM_PARM WITH (UPDLOCK, HOLDLOCK)
+            WHERE PARM_TYPE = 'ORDER_NO';
+
+            SET @ORDER_NO = CONCAT('ORD-', @NEXT_NO);
+
+            -- Check ORDER_NO already exists
+            IF EXISTS ( SELECT 1 FROM dbo.T_ORDER_MASTER WHERE ORDER_NO = @ORDER_NO)
+            BEGIN
+                SET @p_msg = 'Generated Order No already exists. Please retry.';
+                SET @p_msg_type = 0;
+                RETURN
+            END
+
+            -- Update system parameter
+            UPDATE dbo.T_SYSTEM_PARM
+            SET
+                PARM_VALUE  = CAST(@NEXT_NO AS VARCHAR(100)),
+                UPDATE_BY   = CAST(@ai_user_id AS VARCHAR(100)),
+                UPDATE_DATE = GETDATE()
+            WHERE PARM_TYPE = 'ORDER_NO';
+            DECLARE @ORDER_ID BIGINT;
+
+            SELECT @ORDER_ID = ISNULL(MAX(ORDER_ID), 0) + 1
+            FROM dbo.T_ORDER_MASTER;
+
+            -- Insert Order Master
+            INSERT INTO dbo.T_ORDER_MASTER
+            (
+                ORDER_ID,
+                ORDER_NO,
+                VENDOR_ID,
+                INSERT_BY,
+                INSERT_DATE
+            )
+            VALUES
+            (
+                @ORDER_ID,
+                @ORDER_NO,
+                @ai_vendor_id,
+                @ai_user_id,
+                GETDATE()
+            );
+
+            SET @ai_order_id = @ORDER_ID;
+
+            -- Insert Order Details
+            INSERT INTO dbo.T_ORDER_DETAILS
+            (
+                ORDER_ID,
+                ITEM_ID,
+                QUANTITY,
+                INSERT_BY,
+                INSERT_DATE
+            )
+            SELECT
+                @ai_order_id,
+                ITEM_ID,
+                QUANTITY,
+                @ai_user_id,
+                GETDATE()
+            FROM @t_items;
+
+            
+                SET @p_msg = 'Order Placed Succesfully';
+                SET @p_msg_type = 2;
+        END
+
+        ------------------------------------------------
+        -- UPDATE ORDER
+        ------------------------------------------------
+        ELSE IF @as_ops_mode = 'UPDATE'
+        BEGIN
+            -- Check order exists
+            IF NOT EXISTS (
+                SELECT 1 FROM dbo.T_ORDER_MASTER WHERE ORDER_ID = @ai_order_id
+            )
+            BEGIN
+                SET @p_msg = 'Order not found for update.';
+                SET @p_msg_type = 0;
+            END
+
+            UPDATE dbo.T_ORDER_MASTER
+            SET
+                VENDOR_ID   = @ai_vendor_id,
+                UPDATE_BY   = @ai_user_id,
+                UPDATE_DATE = GETDATE()
+            WHERE ORDER_ID = @ai_order_id;
+
+            DELETE FROM dbo.T_ORDER_DETAILS
+            WHERE ORDER_ID = @ai_order_id;
+
+            INSERT INTO dbo.T_ORDER_DETAILS
+            (
+                ORDER_ID,
+                ITEM_ID,
+                QUANTITY,
+                INSERT_BY,
+                INSERT_DATE
+            )
+            SELECT
+                @ai_order_id,
+                ITEM_ID,
+                QUANTITY,
+                @ai_user_id,
+                GETDATE()
+            FROM @t_items;
+            
+            
+            SET @p_msg = 'Order Updated Succesfully';
+            SET @p_msg_type = 2;
+        END
+
+        ------------------------------------------------
+        -- DELETE ORDER
+        ------------------------------------------------
+        ELSE IF @as_ops_mode = 'DELETE'
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM dbo.T_ORDER_MASTER WHERE ORDER_ID = @ai_order_id
+            )
+                SET @p_msg = 'Order not found for delete.';
+                SET @p_msg_type = 0;
+
+            DELETE FROM dbo.T_ORDER_DETAILS
+            WHERE ORDER_ID = @ai_order_id;
+
+            DELETE FROM dbo.T_ORDER_MASTER
+            WHERE ORDER_ID = @ai_order_id;
+        END
+        ELSE
+        BEGIN
+            SET @p_msg ='Invalid OPS_MODE.';   
+            
+                SET @p_msg_type = 0;
+        END
+
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        SET @p_msg ='Databse Error!!';             
+        SET @p_msg_type = 0;                
+		EXEC [DB_ERROR_LOGGER]
+        ROLLBACK TRAN;        
+        THROW;
+    END CATCH
+END;
+GO
