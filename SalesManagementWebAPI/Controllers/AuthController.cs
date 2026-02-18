@@ -28,7 +28,7 @@ namespace SalesManagementWebAPI.Controllers
             LoginResponseModel responseModel = new LoginResponseModel();
             try
             {
-                model.Password = model.Password?.Encrypt();
+                //model.Password = model.Password?.Encrypt();  //commented due to user creation page not in our scenario
                 NotifyModel notifyModel = await authRepo.GetValidateLoginAsync(model);
                 if (notifyModel.MessageType?.ToLower() == "success")
                 {
